@@ -45,7 +45,19 @@ export type AuthErrorCode =
   | 'NETWORK_ERROR'
   | 'UNKNOWN_ERROR'
 
+  export type AuthAction = | { type: 'SESSION_CHECK_START' }
+  | { type: 'SESSION_RESOLVED'; user: User | null }
+  | { type: 'LOGIN_SUCCESS'; user: User }
+  | { type: 'LOGOUT' }
+
   export interface AuthError {
     code: AuthErrorCode
     message: string
   }
+
+export interface AuthContextInterface {
+    authState: AuthState
+    login : (credentials: LoginCredentials) => Promise<void>
+    register : (payload: RegisterPayload) => Promise<void>
+    logout : () => Promise<void>
+}

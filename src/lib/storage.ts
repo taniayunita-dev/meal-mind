@@ -5,32 +5,42 @@
  * 2. Kalau nanti ganti mekanisme persistence, cukup ubah file ini saja.
  */
 
-export const storage = {
-    get<T>(key:string) : T | null {
-        try{
-            const raw = localStorage.getItem(key)
-            if(raw == null){
-                return null
-            }
-            return JSON.parse(raw) as T
-        }catch{
-// Data korup / tidak valid JSON → anggap tidak ada data
-      return null
-        }
+/**
+ * membuat wrapper storage yang aman,
+ * bisa dipakai untuk localStorage MAUPUN sessionStorage
+ * (keduanya punya interface Web Storage API yang identik).
+ */
+
+function createStorageWrapper(engine : Storage){
+   return { get<T>(key: string): T | null {
+      try {
+        const raw = engine.getItem(key)
+        if (raw === null) return null
+        return JSON.parse(raw) as T
+      } catch {
+        return null
+      }
     },
 
-    set<T>(key: string, value:T):void {
-        try {
-      localStorage.setItem(key, JSON.stringify(value))
-    } catch {
-      // localStorage bisa gagal (mode private browsing, storage penuh, dll)
-      // Untuk project ini, kegagalan silent cukup — tidak menghentikan alur user.
-    }
+    set<T>(key: string, value: T): void {
+      try {
+        engine.setItem(key, JSON.stringify(value))
+      } catch {
+        // Storage penuh / private mode — gagal secara silent, tidak menghentikan alur user.
+      }
     },
+
     remove(key: string): void {
-    localStorage.removeItem(key)
-  },
+      engine.removeItem(key)
+    },
+  }
 }
+
+/** Persist sampai user hapus manual / clear browser data — untuk "Remember Me" = true */
+export const storage = createStorageWrapper(localStorage)
+
+/** Persist hanya selama tab terbuka — untuk "Remember Me" = false */
+export const sessionOnlyStorage = createStorageWrapper(sessionStorage)
 
 /**
  * Kunci-kunci localStorage disentralisasi di sini,
